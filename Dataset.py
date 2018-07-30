@@ -33,7 +33,7 @@ class dataset(object):
     def feature_scaling(self):
         Preprocessor = preprocessor()
 
-        self.data = Preprocessor.OneHotIncode_and_Normalize(self.data, self.code_index)
+        return Preprocessor.OneHotIncode_and_Normalize(self.data, self.code_index)
 
     def train_test_seperate(self, ratio=0.8):
         length = int(len(self.data)*ratio)
@@ -49,7 +49,8 @@ class preprocessor:
 
     def OneHotIncode_and_Normalize(self, data, index):
         data_oh = data[:,index]
-        data_nor = data[:,index+1:]
+        data_nor = data[:,index+1:4]
+        data_y = data[:,4]
 
         data_oh = data_oh.reshape(-1,1)
         ohe.fit(data_oh)
@@ -60,7 +61,7 @@ class preprocessor:
         data_nor = normalizer.transform(data_nor)
 
         data = np.c_[data_oh, data_nor]
-        return data
+        return data_oh, data_nor, data_y
 
     def price_remove(self,data, index_price, max_price, min_price):
 

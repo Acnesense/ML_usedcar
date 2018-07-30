@@ -5,7 +5,7 @@ class NN_model(object):
 
     def __init__(self, x_code, x_remain, y_train, weight_of_car2vec = 0, num_of_code = 0, weight_of_all = 0, num_of_remainfeature = 0 , learning_rate = 0.03):
 #data
-        self.y_train = y_train.reshape(-1,1)
+        self.y_train = y_train
         self.x_code = x_code
         self.x_remain = x_remain
 #parameter
@@ -18,6 +18,10 @@ class NN_model(object):
         self.num_batch = 50
 
     def car2vec_layer(self, x_car2vec):
+
+#        x_car2vec = tf.placeholder(tf.float32, [None, self.feature_of_car2vec])
+
+        # car_to_vec_layer
 
         w_1 = tf.Variable(tf.truncated_normal([self.num_of_code, self.weight_of_car2vec]))
         b_1 = tf.Variable(tf.zeros([self.weight_of_car2vec]))
@@ -45,6 +49,7 @@ class NN_model(object):
         b_1 = tf.Variable(tf.zeros([self.weight_of_all]))
         layer_1 = tf.add(tf.matmul(x_all, w_1), b_1)
 #        layer_1 = tf.nn.relu(layer_1)
+        
         # output layer
 
         w_o = tf.Variable(tf.random_uniform([self.weight_of_all,1]))
@@ -67,29 +72,29 @@ class NN_model(object):
         y_ = tf.placeholder(tf.float32, [None, 1])
 
         x_car2vec = self.car2vec_layer(x_code_ph)
-        x_all = tf.concat([x_car2vec, x_remain_ph],1) 
-
+        x_all = tf.concat([x_car2vec, x_remain_ph],1)  
+        print(np.shape(x_all))      
+#        x_all = self.Merge(x_car2vec, x_remain_ph)
         output = self.Mul_layer(x_all)
 
         cost = tf.reduce_mean((output-y_)**2)
         train = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(cost)
 
         sess = tf.Session()
-        sess.run(tf.global_variables_initializer())
+        sess.run(tf.initialize_global_variables())
 
         for i in range(50):
             for j in range(100):
-
                 x_batch1 = self.x_code[self.num_batch*j:self.num_batch*(j+1),:]
                 x_batch2 = self.x_remain[self.num_batch*j:self.num_batch*(j+1),:]
-                y_batch = self.y_train[self.num_batch*j:self.num_batch*(j+1),:]
-
+                y_batch = self.y_train[self.num_batch*j:self.num_batch*(j+1)]
+                y_batch = y_batch.reshape(-1,1)
                 a=sess.run(train, feed_dict={ x_code_ph:x_batch1 , x_remain_ph:x_batch2 , y_:y_batch})
 
-            y_hat = sess.run(cost, feed_dict = {x_code_ph : self.x_code, x_remain_ph : self.x_remain, y_ : self.y_train})
-#           error = self.predict(y_hat, self.y_train)
+            y_hat = sess.run(output, feed_dict = {x_code_ph : self.x_code, x_remain_ph : self.x_remain})
+            error = self.predict(y_hat, self.y_train)
 
-            print('epoch : ', i+1, 'error : ',y_hat,'%')
+            print('epoch : ', i+1, 'error : ',error,'%')
 
 
 """
