@@ -12,7 +12,7 @@ Dataset.feature_removal()
 data_oh, data_nor, data_y = Dataset.feature_scaling()
 
 
-NN = NN_model(x_code = data_oh, x_remain = data_nor, y_train = data_y, weight_of_car2vec = 10, num_of_code = 10, weight_of_all = 10, num_of_remainfeature = 3,  learning_rate = 0.03)
+NN = NN_model(x_code = data_oh, x_remain = data_nor, y_train = data_y, weight_of_car2vec = 50, num_of_code = 10, weight_of_all = 50, num_of_remainfeature = 3,  learning_rate = 0.3)
 NN.train()
 
 # Seperate train and test data

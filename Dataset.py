@@ -60,6 +60,7 @@ class preprocessor:
         normalizer.fit(data_nor)
         data_nor = normalizer.transform(data_nor)
 
+
         data = np.c_[data_oh, data_nor]
         return data_oh, data_nor, data_y
 

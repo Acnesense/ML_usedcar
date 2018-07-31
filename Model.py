@@ -15,13 +15,25 @@ class NN_model(object):
         self.num_of_remainfeature = num_of_remainfeature
         self.num_of_allfeature = num_of_remainfeature + 3
         self.learning_rate = learning_rate
-        self.num_batch = 50
+        self.num_batch = 450
+    
+    def predict(self, y_hat, y_):
 
-    def car2vec_layer(self, x_car2vec):
+        error = 100*(np.absolute(y_hat - y_))#/y_
+        aver_error = np.mean(error)
+
+        return aver_error
+
+
+    def train(self):
+      
+        x_code_ph = tf.placeholder(tf.float32, [None, self.num_of_code])
+        x_remain_ph = tf.placeholder(tf.float32, [None, self.num_of_remainfeature])
+        y_ = tf.placeholder(tf.float32, [None, 1])
 
         w_1 = tf.Variable(tf.truncated_normal([self.num_of_code, self.weight_of_car2vec]))
         b_1 = tf.Variable(tf.zeros([self.weight_of_car2vec]))
-        layer_1 = tf.add(tf.matmul(x_car2vec, w_1), b_1)
+        layer_1 = tf.add(tf.matmul(x_code_ph, w_1), b_1)
         layer_1 = tf.nn.relu(layer_1)
 
         w_2 = tf.Variable(tf.random_uniform([self.weight_of_car2vec,3]))
@@ -29,67 +41,39 @@ class NN_model(object):
         car_2_vec = tf.add(tf.matmul(layer_1,w_2),b_2)
         car_2_vec = tf.nn.relu(car_2_vec)
 
-        return car_2_vec
+        x_all = tf.concat([car_2_vec, x_remain_ph],1)
 
-    def Merge(self, x_car2vec, x_remain):
-    
-        x_all = np.c_[x_car2vec, x_remain]
-
-        return x_all
-
-    def Mul_layer(self, x_all):
-
-#        x_train = tf.placeholder(tf.float32, [None, self.feature_of_
-
-        w_1 = tf.Variable(tf.truncated_normal([self.num_of_allfeature, self.weight_of_all]))
-        b_1 = tf.Variable(tf.zeros([self.weight_of_all]))
-        layer_1 = tf.add(tf.matmul(x_all, w_1), b_1)
-#        layer_1 = tf.nn.relu(layer_1)
-        # output layer
+        w_3 = tf.Variable(tf.truncated_normal([self.num_of_allfeature, self.weight_of_all]))
+        b_3 = tf.Variable(tf.zeros([self.weight_of_all]))
+        layer_2 = tf.add(tf.matmul(x_all, w_3), b_3)
+        layer_2 = tf.nn.relu(layer_2)
 
         w_o = tf.Variable(tf.random_uniform([self.weight_of_all,1]))
         b_o = tf.Variable(tf.zeros([1]))
-        output = tf.add(tf.matmul(layer_1, w_o), b_o)
-
-        return output
-
-    def predict(self, y_hat, y_):
-
-        error = 100*(np.absolute(y_hat - y_))/y_hat
-        aver_error = np.mean(error)
-
-        return aver_error
-
-    def train(self):
-        
-        x_code_ph = tf.placeholder(tf.float32, [None, self.num_of_code])
-        x_remain_ph = tf.placeholder(tf.float32, [None, self.num_of_remainfeature])
-        y_ = tf.placeholder(tf.float32, [None, 1])
-
-        x_car2vec = self.car2vec_layer(x_code_ph)
-        x_all = tf.concat([x_car2vec, x_remain_ph],1) 
-
-        output = self.Mul_layer(x_all)
+        output = tf.add(tf.matmul(layer_2, w_o), b_o)
 
         cost = tf.reduce_mean((output-y_)**2)
-        train = tf.train.GradientDescentOptimizer(self.learning_rate).minimize(cost)
+        train = tf.train.GradientDescentOptimizer(0.3).minimize(cost)
 
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
 
+        print(self.x_code)
+        print(self.x_remain)
+        print(self.y_train)
+
         for i in range(50):
-            for j in range(100):
+            for j in range(20):
 
                 x_batch1 = self.x_code[self.num_batch*j:self.num_batch*(j+1),:]
                 x_batch2 = self.x_remain[self.num_batch*j:self.num_batch*(j+1),:]
                 y_batch = self.y_train[self.num_batch*j:self.num_batch*(j+1),:]
-
                 a=sess.run(train, feed_dict={ x_code_ph:x_batch1 , x_remain_ph:x_batch2 , y_:y_batch})
+            
+            y_hat = sess.run(output, feed_dict = {x_code_ph : self.x_code, x_remain_ph : self.x_remain, y_ : self.y_train})
+            error = self.predict(y_hat, self.y_train)
 
-            y_hat = sess.run(cost, feed_dict = {x_code_ph : self.x_code, x_remain_ph : self.x_remain, y_ : self.y_train})
-#           error = self.predict(y_hat, self.y_train)
-
-            print('epoch : ', i+1, 'error : ',y_hat,'%')
+            print('epoch : ', i+1, 'error : ',error,'%')
 
 
 """
