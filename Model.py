@@ -34,6 +34,8 @@ class NN_model(object):
    
     def seperate_train_test(self, x_code, x_remain, y_data, rate):
         
+ #       x_code, x_remain, y_data = shuffle(x_code, x_remain, y_data)
+
 
         ratio = int(self.length*rate)
         
@@ -61,30 +63,24 @@ class NN_model(object):
         output1 = slim.fully_connected (x_code_ph, self.weight_of_car2vec, scope='hidden_embed1', activation_fn=tf.nn.relu, weights_initializer=he_init)
         output1 = slim.dropout (output1, self.dropout, scope='dropout1')
         
-        #output2 = slim.fully_connected(output1_, self.weight_of_car2vec, scope='hidden_embed2', activation_fn=tf.nn.relu, weights_initializer=he_init)
-        #output2_ = slim.dropout (output2, self.dropout, scope='dropout2')
-        
         x_embed = slim.fully_connected (output1, 3, scope='output_embed', activation_fn=None, weights_initializer=he_init)
-        input3 = tf.concat ([x_remain_ph, x_embed], 1)
+        input2 = tf.concat ([x_remain_ph, x_embed], 1)
         
-        output3 = slim.fully_connected(input3, self.weight_of_all, scope='hidden_main1', activation_fn=tf.nn.relu, weights_initializer=he_init)
-        output3_ = slim.dropout (output3, self.dropout, scope='dropout3')
+        output2 = slim.fully_connected(input2, self.weight_of_all, scope='hidden_main1', activation_fn=tf.nn.relu, weights_initializer=he_init)
+        output2 = slim.dropout (output2, self.dropout, scope='dropout3')
         
-        #output4 = slim.fully_connected(output3_, self.weight_of_all, scope='hidden_main2', activation_fn=tf.nn.relu, weights_initializer=he_init)
-        #output4_ = slim.dropout (output4, self.dropout, scope='dropout4')
-        
-        prediction = slim.fully_connected(output3, 1, scope='output_main', activation_fn=None, weights_initializer=he_init)
+        prediction = slim.fully_connected(output2, 1, scope='output_main', activation_fn=None, weights_initializer=he_init)
         tf.identity (prediction, name="prediction")
         
         cost = tf.reduce_mean(tf.abs ((prediction-y_)))
-        train = tf.train.GradientDescentOptimizer(0.03).minimize(cost)
+        train = tf.train.AdamOptimizer(0.03).minimize(cost)
 
         sess = tf.Session()
         sess.run(tf.global_variables_initializer())
 
         x_train_code, x_test_code, x_train_remain, x_test_remain, y_train, y_test = self.seperate_train_test(self.x_code, self.x_remain, self.y_data,0.8)
         
-        self.num_batch = 300
+        self.num_batch = int(len(x_train_code)/20)
         print(self.num_batch)
         for i in range(2000):
             for j in range(20):
@@ -100,14 +96,14 @@ class NN_model(object):
                     a, pred= sess.run((train, prediction), feed_dict={ x_code_ph:x_train_code_batch , x_remain_ph : x_train_remain_batch , y_: y_train_batch})
             
 
-            x_train_code, x_train_remain, y_train = shuffle(x_train_code, x_train_remain, y_train)
+            x_train_code, x_train_remain, y_train = self.shuffle(x_train_code, x_train_remain, y_train)
 
             
             if((i+1)%100 == 0):
                 
              
-                y_hat = sess.run(prediction, feed_dict = {x_code_ph : x_train_code, x_remain_ph : x_train_remain})
-                error = self.predict(y_hat, y_train)
+                y_hat = sess.run(prediction, feed_dict = {x_code_ph : x_train_code[0:100,:], x_remain_ph : x_train_remain[0:100,:]})
+                error = self.predict(y_hat, y_train[0:100,:])
 
                 print('epoch : ', i+1, 'error : ',error,'%')
 

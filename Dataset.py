@@ -35,13 +35,6 @@ class dataset(object):
 
         return Preprocessor.OneHotIncode_and_Normalize(self.data, self.code_index)
 
-    def train_test_seperate(self, ratio=0.8):
-        length = int(len(self.data)*ratio)
-        
-        train_data = self.data[0:length,:]
-        test_data = self.data[length:,:]
-               
-        return train_data, test_data       
 class preprocessor:
 	
     def __init__(self):
