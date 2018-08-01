@@ -36,7 +36,6 @@ class NN_model(object):
         
  #       x_code, x_remain, y_data = shuffle(x_code, x_remain, y_data)
 
-
         ratio = int(self.length*rate)
         
         x_train_code = x_code[0:ratio,:]
@@ -81,7 +80,9 @@ class NN_model(object):
         x_train_code, x_test_code, x_train_remain, x_test_remain, y_train, y_test = self.seperate_train_test(self.x_code, self.x_remain, self.y_data,0.8)
         
         self.num_batch = int(len(x_train_code)/20)
+
         print(self.num_batch)
+
         for i in range(2000):
             for j in range(20):
                 if(j<19):
